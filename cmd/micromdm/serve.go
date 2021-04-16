@@ -84,6 +84,7 @@ func serve(args []string) error {
 		flCommandWebhookURL      = flagset.String("command-webhook-url", env.String("MICROMDM_WEBHOOK_URL", ""), "URL to send command responses")
 		flHomePage               = flagset.Bool("homepage", env.Bool("MICROMDM_HTTP_HOMEPAGE", true), "Hosts a simple built-in webpage at the / address")
 		flSCEPClientValidity     = flagset.Int("scep-client-validity", env.Int("MICROMDM_SCEP_CLIENT_VALIDITY", 365), "Sets the scep certificate validity in days")
+		flSCEPOrg                = flagset.String("scep-organization", env.String("MICROMDM_SCEP_ORGANIZATION", "MicroMDM"), "Set organization name in configuration profiles")
 		flNoCmdHistory           = flagset.Bool("no-command-history", env.Bool("MICROMDM_NO_COMMAND_HISTORY", false), "disables saving of command history")
 		flUseDynChallenge        = flagset.Bool("use-dynamic-challenge", env.Bool("MICROMDM_USE_DYNAMIC_CHALLENGE", false), "require dynamic SCEP challenges")
 		flGenDynChalEnroll       = flagset.Bool("gen-dynamic-challenge", env.Bool("MICROMDM_GEN_DYNAMIC_CHALLENGE", false), "generate dynamic SCEP challenges in enrollment profile (built-in only)")
@@ -131,6 +132,7 @@ func serve(args []string) error {
 		ServerPublicURL:        strings.TrimRight(*flServerURL, "/"),
 		Depsim:                 *flDepSim,
 		TLSCertPath:            *flTLSCert,
+		SCEPOrg:                *flSCEPOrg,
 		CommandWebhookURL:      *flCommandWebhookURL,
 		NoCmdHistory:           *flNoCmdHistory,
 		UseDynSCEPChallenge:    *flUseDynChallenge,

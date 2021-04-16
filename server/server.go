@@ -47,6 +47,7 @@ type Server struct {
 	SCEPChallenge          string
 	SCEPClientValidity     int
 	TLSCertPath            string
+	SCEPOrg                string
 	SCEPDepot              *boltdepot.Depot
 	UseDynSCEPChallenge    bool
 	GenDynSCEPChallenge    bool
@@ -244,10 +245,7 @@ func (c *Server) setupPushService(logger log.Logger) error {
 }
 
 func (c *Server) setupEnrollmentService() error {
-	var (
-		SCEPCertificateSubject string
-		err                    error
-	)
+	var err error
 
 	chalStore := c.SCEPChallengeDepot
 	if !c.GenDynSCEPChallenge {
@@ -263,7 +261,7 @@ func (c *Server) setupEnrollmentService() error {
 		c.SCEPChallenge,
 		c.ServerPublicURL,
 		c.TLSCertPath,
-		SCEPCertificateSubject,
+		c.SCEPOrg,
 		c.ProfileDB,
 		chalStore,
 	)

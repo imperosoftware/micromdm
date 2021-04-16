@@ -30,7 +30,7 @@ type Service interface {
 	OTAPhase3(ctx context.Context) (profile.Mobileconfig, error)
 }
 
-func NewService(topic TopicProvider, sub pubsub.Subscriber, scepURL, scepChallenge, url, tlsCertPath, scepSubject string, profileDB profile.Store, cs *challengestore.Depot) (Service, error) {
+func NewService(topic TopicProvider, sub pubsub.Subscriber, scepURL, scepChallenge, url, tlsCertPath, scepOrg string, profileDB profile.Store, cs *challengestore.Depot) (Service, error) {
 	var tlsCert []byte
 	var err error
 
@@ -42,9 +42,10 @@ func NewService(topic TopicProvider, sub pubsub.Subscriber, scepURL, scepChallen
 		}
 	}
 
-	if scepSubject == "" {
-		scepSubject = "/O=MicroMDM/CN=MicroMDM Identity (%ComputerName%)"
-	}
+	// TODO: backslash escape characters in scepOrg according to rules in:
+	// https://docs.microsoft.com/en-us/previous-versions/windows/desktop/ldap/distinguished-names
+
+	scepSubject := "/O=" + scepOrg + "/CN=" + scepOrg + " Identity (%ComputerName%)"
 
 	subjectElements := strings.Split(scepSubject, "/")
 	var subject [][][]string
@@ -63,6 +64,7 @@ func NewService(topic TopicProvider, sub pubsub.Subscriber, scepURL, scepChallen
 	svc := &service{
 		URL:                url,
 		SCEPURL:            scepURL,
+		SCEPOrg:            scepOrg,
 		SCEPSubject:        subject,
 		SCEPChallenge:      scepChallenge,
 		SCEPChallengeStore: cs,
@@ -111,6 +113,7 @@ type service struct {
 	SCEPURL            string
 	SCEPChallenge      string
 	SCEPChallengeStore *challengestore.Depot
+	SCEPOrg            string
 	SCEPSubject        [][][]string
 	TLSCert            []byte
 	ProfileDB          profile.Store
@@ -169,14 +172,14 @@ const perUserConnections = "com.apple.mdm.per-user-connections"
 func (svc *service) MakeEnrollmentProfile() (Profile, error) {
 	profile := NewProfile()
 	profile.PayloadIdentifier = EnrollmentProfileId
-	profile.PayloadOrganization = "MicroMDM"
+	profile.PayloadOrganization = svc.SCEPOrg
 	profile.PayloadDisplayName = "Enrollment Profile"
 	profile.PayloadDescription = "The server may alter your settings"
 	profile.PayloadScope = "System"
 
 	mdmPayload := NewPayload("com.apple.mdm")
 	mdmPayload.PayloadDescription = "Enrolls with the MDM server"
-	mdmPayload.PayloadOrganization = "MicroMDM"
+	mdmPayload.PayloadOrganization = svc.SCEPOrg
 	mdmPayload.PayloadIdentifier = EnrollmentProfileId + ".mdm"
 	mdmPayload.PayloadScope = "System"
 
@@ -221,7 +224,7 @@ func (svc *service) MakeEnrollmentProfile() (Profile, error) {
 		scepPayload.PayloadDescription = "Configures SCEP"
 		scepPayload.PayloadDisplayName = "SCEP"
 		scepPayload.PayloadIdentifier = EnrollmentProfileId + ".scep"
-		scepPayload.PayloadOrganization = "MicroMDM"
+		scepPayload.PayloadOrganization = svc.SCEPOrg
 		scepPayload.PayloadContent = scepContent
 		scepPayload.PayloadScope = "System"
 
@@ -234,8 +237,8 @@ func (svc *service) MakeEnrollmentProfile() (Profile, error) {
 	// Client needs to trust us at this point if we are using a self signed certificate.
 	if len(svc.TLSCert) > 0 {
 		tlsPayload := NewPayload("com.apple.security.pem")
-		tlsPayload.PayloadDisplayName = "Self-signed TLS certificate for MicroMDM"
-		tlsPayload.PayloadDescription = "Installs the TLS certificate for MicroMDM"
+		tlsPayload.PayloadDisplayName = "Self-signed TLS certificate for " + svc.SCEPOrg
+		tlsPayload.PayloadDescription = "Installs the TLS certificate for " + svc.SCEPOrg
 		tlsPayload.PayloadIdentifier = EnrollmentProfileId + ".cert.selfsigned"
 		tlsPayload.PayloadContent = svc.TLSCert
 
@@ -255,9 +258,9 @@ func (svc *service) OTAEnroll(ctx context.Context) (profile.Mobileconfig, error)
 func (svc *service) MakeOTAEnrollPayload() (Payload, error) {
 	payload := NewPayload("Profile Service")
 	payload.PayloadIdentifier = OTAProfileId
-	payload.PayloadDisplayName = "MicroMDM Profile Service"
+	payload.PayloadDisplayName = svc.SCEPOrg + " Profile Service"
 	payload.PayloadDescription = "Profile Service enrollment"
-	payload.PayloadOrganization = "MicroMDM"
+	payload.PayloadOrganization = svc.SCEPOrg
 	payload.PayloadContent = ProfileServicePayload{
 		URL:              svc.URL + "/ota/phase23",
 		Challenge:        "",
@@ -276,7 +279,7 @@ func (svc *service) OTAPhase2(ctx context.Context) (profile.Mobileconfig, error)
 func (svc *service) MakeOTAPhase2Profile() (Profile, error) {
 	profile := NewProfile()
 	profile.PayloadIdentifier = OTAProfileId + ".phase2"
-	profile.PayloadOrganization = "MicroMDM"
+	profile.PayloadOrganization = svc.SCEPOrg
 	profile.PayloadDisplayName = "OTA Phase 2"
 	profile.PayloadDescription = "The server may alter your settings"
 	profile.PayloadScope = "System"
@@ -298,7 +301,7 @@ func (svc *service) MakeOTAPhase2Profile() (Profile, error) {
 	scepPayload.PayloadDescription = "Configures SCEP"
 	scepPayload.PayloadDisplayName = "SCEP"
 	scepPayload.PayloadIdentifier = OTAProfileId + ".phase2.scep"
-	scepPayload.PayloadOrganization = "MicroMDM"
+	scepPayload.PayloadOrganization = svc.SCEPOrg
 	scepPayload.PayloadContent = scepContent
 	scepPayload.PayloadScope = "System"
 
