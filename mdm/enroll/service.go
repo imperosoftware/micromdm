@@ -42,10 +42,9 @@ func NewService(topic TopicProvider, sub pubsub.Subscriber, scepURL, scepChallen
 		}
 	}
 
-	// TODO: backslash escape characters in scepOrg according to rules in:
-	// https://docs.microsoft.com/en-us/previous-versions/windows/desktop/ldap/distinguished-names
+	subjectOrg := escapeAttributeValue(scepOrg)
 
-	scepSubject := "/O=" + scepOrg + "/CN=" + scepOrg + " Identity (%ComputerName%)"
+	scepSubject := "/O=" + subjectOrg + "/CN=" + subjectOrg + " Identity (%ComputerName%)"
 
 	subjectElements := strings.Split(scepSubject, "/")
 	var subject [][][]string
@@ -79,6 +78,46 @@ func NewService(topic TopicProvider, sub pubsub.Subscriber, scepURL, scepChallen
 	}
 
 	return svc, nil
+}
+
+// escapeAttributeValue returns a copy of value with reserved characters
+// escaped according to RFC 4514: https://tools.ietf.org/html/rfc4514
+func escapeAttributeValue(value string) string {
+	var sb strings.Builder
+
+	nonprintableChars := map[rune]string{
+		'\n':   "\\0A",
+		'\r':   "\\0D",
+		'\x00': "\\00",
+	}
+
+	for i, v := range value {
+		// Non-printable characters are encoded in hexadecimal notation.
+		if hexCode, ok := nonprintableChars[v]; ok {
+			sb.WriteString(hexCode)
+			continue
+		}
+
+		switch v {
+		// Escape pound sign at the beginning of the string.
+		case '#':
+			if i == 0 {
+				sb.WriteRune('\\')
+			}
+		// Escape space character at the beginning or end of the string.
+		case ' ':
+			if i == 0 || i == len(value)-1 {
+				sb.WriteRune('\\')
+			}
+		// Unconditionally escape the following characters.
+		case '"', '+', ',', ';', '<', '>', '\\', '/', '=':
+			sb.WriteRune('\\')
+		}
+
+		sb.WriteRune(v)
+	}
+
+	return sb.String()
 }
 
 func updateTopic(svc *service, sub pubsub.Subscriber) error {
