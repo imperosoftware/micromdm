@@ -38,3 +38,5 @@ require (
 replace github.com/fullsailor/pkcs7 => github.com/groob/pkcs7 v0.0.0-20180824154052-36585635cb64
 
 go 1.13
+
+replace github.com/micromdm/scep => github.com/imperosoftware/scep v1.0.1-0.20210420100517-1e6a90e736d0

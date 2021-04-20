@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/url"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/boltdb/bolt"
@@ -348,7 +349,7 @@ func (c *Server) setupSCEP(logger log.Logger) error {
 		return err
 	}
 
-	_, err = depot.CreateOrLoadCA(key, 5, "MicroMDM", "US")
+	_, err = depot.CreateOrLoadCA(key, 5, c.SCEPOrg, strings.ToUpper(c.SCEPOrg)+" SCEP CA", "US")
 	if err != nil {
 		return err
 	}
