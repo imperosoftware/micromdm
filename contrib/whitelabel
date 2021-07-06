@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+set -eux -o pipefail
+
+cd $(dirname "$0")/..
+
+find . \( -not -name '*.md' -not -name '*.txt' -not -name '*_test.go' -not -path './cmd/mdmctl/*' \) -name '*.go' -type f \
+  | xargs sed -i '' 's/MicroMDM/ImperoMDM/g'
+
+find . \( -not -name '*.md' -not -name '*.txt' -not -name '*_test.go' -not -path './cmd/mdmctl/*' \) -name '*.go' -type f \
+  | xargs sed -i '' 's/MICROMDM SCEP CA/IMPERO SCEP CA/g'
+
+find . \( -not -name '*.md' -not -name '*.txt' -not -name '*_test.go' -not -path './cmd/mdmctl/*' \) -name '*.go' -type f \
+  | xargs sed -i '' 's/com.github.micromdm.micromdm/cloud.backdrop.uk/g'
