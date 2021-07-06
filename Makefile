@@ -78,11 +78,11 @@ install-local: \
 	$(eval APP_NAME = mdmctl)
 
 mdmctl: .pre-build .pre-mdmctl
-	go build -o build/$(CURRENT_PLATFORM)/mdmctl -ldflags ${BUILD_VERSION} ./cmd/mdmctl
+	go build -mod vendor -o build/$(CURRENT_PLATFORM)/mdmctl -ldflags ${BUILD_VERSION} ./cmd/mdmctl
 
 xp-mdmctl: .pre-build .pre-mdmctl
-	GOOS=darwin go build -o build/darwin/mdmctl -ldflags ${BUILD_VERSION} ./cmd/mdmctl
-	GOOS=linux CGO_ENABLED=0 go build -o build/linux/mdmctl  -ldflags ${BUILD_VERSION} ./cmd/mdmctl
+	GOOS=darwin go build -mod vendor -o build/darwin/mdmctl -ldflags ${BUILD_VERSION} ./cmd/mdmctl
+	GOOS=linux CGO_ENABLED=0 go build -mod vendor -o build/linux/mdmctl  -ldflags ${BUILD_VERSION} ./cmd/mdmctl
 
 install-mdmctl: .pre-mdmctl
 	go install -ldflags ${BUILD_VERSION} ./cmd/mdmctl
@@ -93,20 +93,20 @@ APP_NAME = micromdm
 	$(eval APP_NAME = micromdm)
 
 micromdm: .pre-build .pre-micromdm
-	go build -o build/$(CURRENT_PLATFORM)/micromdm -ldflags ${BUILD_VERSION} ./cmd/micromdm
+	go build -mod vendor -o build/$(CURRENT_PLATFORM)/micromdm -ldflags ${BUILD_VERSION} ./cmd/micromdm
 
 install-micromdm: .pre-micromdm
 	go install -ldflags ${BUILD_VERSION} ./cmd/micromdm
 
 xp-micromdm: .pre-build .pre-micromdm
-	GOOS=darwin go build -o build/darwin/micromdm -ldflags ${BUILD_VERSION} ./cmd/micromdm
-	GOOS=linux CGO_ENABLED=0 go build -o build/linux/micromdm  -ldflags ${BUILD_VERSION} ./cmd/micromdm
+	GOOS=darwin go build -mod vendor -o build/darwin/micromdm -ldflags ${BUILD_VERSION} ./cmd/micromdm
+	GOOS=linux CGO_ENABLED=0 go build -mod vendor -o build/linux/micromdm  -ldflags ${BUILD_VERSION} ./cmd/micromdm
 
 release-zip: xp-micromdm xp-mdmctl
 	zip -r micromdm_${VERSION}.zip build/
 
 docker-build:
-	GOOS=linux CGO_ENABLED=0 go build -o build/linux/micromdm  -ldflags ${BUILD_VERSION} ./cmd/micromdm
+	GOOS=linux CGO_ENABLED=0 go build -mod vendor -o build/linux/micromdm  -ldflags ${BUILD_VERSION} ./cmd/micromdm
 	docker build -t ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG} .
 
 docker-tag: docker-build
