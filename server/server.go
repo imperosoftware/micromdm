@@ -350,7 +350,7 @@ func (c *Server) setupSCEP(logger log.Logger) error {
 		return err
 	}
 
-	_, err = depot.CreateOrLoadCA(key, 5, "MicroMDM", "US")
+	_, err = depot.CreateOrLoadCA(key, 5, "ImperoMDM", "US")
 	if err != nil {
 		return err
 	}
